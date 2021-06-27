@@ -138,14 +138,18 @@
 
 (defmethod group-startup ((group float-group)))
 
-(flet ((add-float-window (group window)
-         (change-class window 'float-window)
-         (float-window-align window)
-         (group-focus-window group window)))
-  (defmethod group-add-window ((group float-group) window &key &allow-other-keys)
-    (add-float-window group window))
-  (defmethod group-add-window (group (window float-window) &key &allow-other-keys)
-    (add-float-window group window)))
+(flet ((add-float-window (group window raise)
+         (let ((fullscreen-p (window-fullscreen window)))
+           (change-class window 'float-window)
+           (float-window-align window)
+           (when fullscreen-p
+             (activate-fullscreen window))
+           (when raise
+             (group-focus-window group window)))))
+  (defmethod group-add-window ((group float-group) window &key raise &allow-other-keys)
+    (add-float-window group window raise))
+  (defmethod group-add-window (group (window float-window) &key raise &allow-other-keys)
+    (add-float-window group window raise)))
 
 (defun %float-focus-next (group)
   (let ((windows (remove-if 'window-hidden-p (group-windows group))))
